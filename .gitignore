@@ -1,3 +1,4 @@
 *.o
 *.log
 *~
+PCModule/server/issd_compute_server
