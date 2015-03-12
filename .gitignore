@@ -2,3 +2,4 @@
 *.log
 *~
 PCModule/server/issd_compute_server
+PCModule/client/issd_test_client

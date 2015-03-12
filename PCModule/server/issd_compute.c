@@ -522,7 +522,7 @@ int issd_waitFinish(afCommand_t *rCmd, char* devname)
 		sleep(1); // wait 1 second
 	}
 	
-	memcpy(pCmd, rbuffer, sizeof(afCommand_t));
+	memcpy(rCmd, rbuffer, sizeof(afCommand_t));
 	free(rbuffer);	
 	return 0;
 }
