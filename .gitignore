@@ -1,5 +1,10 @@
 *.o
 *.log
 *~
+*.bin
+*.axf
+*.exe
+OpenSSD-1.1.0/build_rvds/firmware.htm
+OpenSSD-1.1.0/build_rvds/list.txt
 PCModule/server/issd_compute_server
 PCModule/client/issd_test_client
