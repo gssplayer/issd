@@ -132,7 +132,7 @@ void ata_read_buffer(UINT32 lba, UINT32 sector_count)
 	//uart_printf("nr_rd_bios: %d\n", read_dram_32(&(afCmd->nr_rd_bios)));
 	//uart_printf("wlength: %d\n", read_dram_32(afCmd->wlength));
 	//uart_printf("nr_wr_bios: %d\n", read_dram_32(&(afCmd->nr_wr_bios)));
-	uart_printf("out:fileSize = %d\n", read_dram_32(&(afCmd->fileSize)));
+	//uart_printf("out:fileSize = %d\n", read_dram_32(&(afCmd->fileSize)));
 	uart_printf("before return :isOK = %d\n", read_dram_32(&(afCmd->isOK)));
 	
 	//write_dram_32(&(afCmd->opType), 100);
@@ -147,17 +147,35 @@ void ata_read_buffer(UINT32 lba, UINT32 sector_count)
 	int rlen;
 	int wlen;
 } afCommand_t; */
+
+int num_packet = 0;
+
+UINT32 packet_rcv_buf_offset = 0;
+
 void ata_write_buffer(UINT32 lba, UINT32 sector_count)
 {
 	uart_print("WRITE_BUFFER CMD transfered\n");
 	//int tval = 10, tt2 = 20, tt3 = 30;
 	//uart_printf("tval = %d, tt2 = %d, tt3 = %d", tval, tt2, tt3);
-	pio_sector_transfer(HIL_BUF_ADDR, PIO_H2D);
+	
+	pio_sector_transfer(HIL_BUF_ADDR + packet_rcv_buf_offset, PIO_H2D);
 	
 	//afCommand_t* pCmd = (afCommand_t *)HIL_BUF_ADDR;
 	//uart_printf("opType = %d, rlen = %d, wlen = %d\n", read_dram_32(&(pCmd->opType)), read_dram_32(&(pCmd->rlen)), read_dram_32(&(pCmd->wlen)));
-	mem_copy(ISSD_CMD_BUFFER_ADDR ,HIL_BUF_ADDR, BYTES_PER_PAGE);
-	issd_process_cmd();
+
+	if(!num_packet)
+	{
+		num_packet = read_dram_32(HIL_BUF_ADDR);
+	}
+	num_packet--;
+	packet_rcv_buf_offset += 512;
+
+	if(!num_packet)
+	{
+		packet_rcv_buf_offset = 0;	
+		mem_copy(ISSD_CMD_BUFFER_ADDR ,HIL_BUF_ADDR, BYTES_PER_PAGE);
+		issd_process_cmd();
+	}
 }
 
 void ata_standby(UINT32 lba, UINT32 sector_count)

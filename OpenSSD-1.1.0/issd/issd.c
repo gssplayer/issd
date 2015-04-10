@@ -15,10 +15,10 @@ void issd_process_cmd(void)
 	
 	uart_printf("opType: %d\n", read_dram_32(&(afCmd->opType)));
 	//uart_printf("rlength: %d\n", read_dram_32(afCmd->rlength));
-	uart_printf("nr_rd_bios: %d\n", read_dram_32(&(afCmd->nr_rd_bios)));
+	//uart_printf("nr_rd_bios: %d\n", read_dram_32(&(afCmd->nr_rd_bios)));
 	//uart_printf("wlength: %d\n", read_dram_32(afCmd->wlength));
-	uart_printf("nr_wr_bios: %d\n", read_dram_32(&(afCmd->nr_wr_bios)));
-	uart_printf("input fileSize = %d\n", read_dram_32(&(afCmd->fileSize)));
+	//uart_printf("nr_wr_bios: %d\n", read_dram_32(&(afCmd->nr_wr_bios)));
+	//uart_printf("input fileSize = %d\n", read_dram_32(&(afCmd->fileSize)));
 	uart_printf("in:isOK = %d\n", read_dram_32(&(afCmd->isOK)));
 	
 	int opType = read_dram_32(&(afCmd->opType));
@@ -60,17 +60,29 @@ int do_issd_backup(void)
 	UINT32 read_file_offset_end = 0;
 	//UINT32 buf_addr;
 	
-	int nr_rd_bios = read_dram_32(&(afCmd->nr_rd_bios));
-	int nr_wr_bios = read_dram_32(&(afCmd->nr_wr_bios));
-	int fileSize = read_dram_32(&(afCmd->fileSize));
+	// int nr_rd_bios = read_dram_32(&(afCmd->file_ext_offset[1])) - read_dram_32(&(afCmd->file_ext_offset[0]));	
+	// int nr_wr_bios = read_dram_32(&(afCmd->file_ext_offset[2])) - read_dram_32(&(afCmd->file_ext_offset[1]));	
+	// int fileSize = read_dram_32(&(afCmd->fileSize[0]));
+	
+	int rd_bio_offset = read_dram_32(&(afCmd->file_ext_offset[0]));
+	int wr_bio_offset = read_dram_32(&(afCmd->file_ext_offset[1]));
+	int total_bios = read_dram_32(&(afCmd->file_ext_offset[2]));
+
+	int nr_rd_bios = wr_bio_offset - rd_bio_offset;
+	int nr_wr_bios = total_bios - wr_bio_offset;	
+	int fileSize = read_dram_32(&(afCmd->fileSize[0]));
+	
+	// int nr_rd_bios = read_dram_32(&(afCmd->nr_rd_bios));
+	// int nr_wr_bios = read_dram_32(&(afCmd->nr_wr_bios));
+	// int fileSize = read_dram_32(&(afCmd->fileSize));
 	curSector.index = 0;
 	curSector.offset = 0;
 	
 	for(i = 0; i < nr_rd_bios; i++)
 	{
-		int lba = read_dram_32(&(afCmd->rd_bios[i]));
+		int lba = read_dram_32(&((afCmd->fileExtArr[rd_bio_offset + i]).lba));
 		uart_printf("lba start:%d", lba);
-		int num_sectors = read_dram_32(&(afCmd->rd_bios_len[i]));
+		int num_sectors = read_dram_32(&((afCmd->fileExtArr[rd_bio_offset + i]).len));
 		uart_printf("lba len:%d", num_sectors);
 		
 		while(num_sectors != 0)
@@ -119,7 +131,7 @@ int do_issd_backup(void)
 			while(wr_sectors != 0)
 			{
 				ASSERT(curSector.index < nr_wr_bios);
-				int curBioLen = read_dram_32(&(afCmd->wr_bios_len[curSector.index]));
+				int curBioLen = read_dram_32(&((afCmd->fileExtArr[wr_bio_offset + curSector.index]).len));
 				
 				int left_wr_sectors = curBioLen - curSector.offset;
 				
@@ -136,7 +148,7 @@ int do_issd_backup(void)
 					send_wr_sectors = wr_sectors;
 				}
 				
-				int curBioLba = read_dram_32(&(afCmd->wr_bios[curSector.index]));
+				int curBioLba = read_dram_32(&((afCmd->fileExtArr[wr_bio_offset + curSector.index]).lba));
 				int wr_lba = curBioLba + curSector.offset;
 				
 				uart_printf("wr_lba = %d", wr_lba);
